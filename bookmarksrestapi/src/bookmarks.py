@@ -119,3 +119,21 @@ def delete_bookmark(id):
     db.session.delete(bookmark)
     db.session.commit()
     return jsonify({}),HTTPStatus.NO_CONTENT.value
+
+
+@bookmarks.get('/stats')
+@jwt_required()
+def get_stats():
+    data=[]
+    user=get_jwt_identity()
+    items=Bookmark.query.filter_by(user_id=user).all()
+    for item in items:
+        new_link={
+            'visits':item.visits,
+            'url':item.url,
+            'id':item.id,
+            'short_url':item.short_url
+        }
+        data.append(new_link)
+    return jsonify({'data':data}),HTTPStatus.OK.value
+    
