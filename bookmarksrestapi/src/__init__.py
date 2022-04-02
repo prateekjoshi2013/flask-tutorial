@@ -1,5 +1,7 @@
+from http import HTTPStatus
 import os
-from flask import Flask,jsonify
+from flask import Flask,jsonify,redirect
+from src.database import Bookmark
 from src.auth import auth
 from src.bookmarks import bookmarks
 from src.database import db
@@ -25,5 +27,21 @@ def create_app(test_config=None):
     
     app.register_blueprint(auth)
     app.register_blueprint(bookmarks)
+
+    @app.get('/<short_url>')
+    def redirect_to_url(short_url):
+        bookmark=Bookmark.query.filter_by(short_url=short_url).first_or_404()
+        if bookmark:
+            bookmark.visits=bookmark.visits+1
+            db.session.commit()
+            return redirect(bookmark.url)
+
+    @app.errorhandler(HTTPStatus.NOT_FOUND.value)
+    def handle_404(e):
+        return jsonify({"error":"not found"}),HTTPStatus.NOT_FOUND.value
+
+    @app.errorhandler(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+    def handle_500(e):
+        return jsonify({"error": "Internal Server Error"}),HTTPStatus.INTERNAL_SERVER_ERROR.value
 
     return app
