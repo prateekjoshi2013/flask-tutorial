@@ -62,3 +62,23 @@ def handle_bookmarks():
             "has_prev": bookmarks.has_prev
         }
         return jsonify({'data':data , "meta":meta}),HTTPStatus.OK.value
+
+
+@bookmarks.get("/<int:id>")
+@jwt_required()
+def get_bookmark(id):
+    curent_user=get_jwt_identity()
+    bookmark=Bookmark.query.filter_by(user_id=curent_user,id=id).first()
+    if not bookmark:
+        return jsonify({'message':'Item not found'}),HTTPStatus.NOT_FOUND.value
+    return jsonify({
+            'url':bookmark.url,
+            'short_url':bookmark.short_url,
+            'id':bookmark.id,
+            'visit':bookmark.visits,
+            'body':bookmark.body,
+            'created_at':bookmark.created_at,
+            'updated_at':bookmark.updated_at,
+        }),HTTPStatus.FOUND.value
+
+
