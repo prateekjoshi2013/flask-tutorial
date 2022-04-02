@@ -10,8 +10,6 @@ bookmarks=Blueprint("bookmarks",__name__,url_prefix='/api/v1/bookmarks')
 @bookmarks.route('/',methods=['POST','GET'])
 @jwt_required()
 def handle_bookmarks():
-    import pdb
-    pdb.set_trace()
     current_user=get_jwt_identity()
     if request.method=='POST':
         body=request.get_json().get('body','')
@@ -37,10 +35,14 @@ def handle_bookmarks():
             'updated_at':bookmark.updated_at,
         }),HTTPStatus.CREATED.value
     else:
-        bookmarks=Bookmark.query.filter_by(user_id=current_user)
+        page=request.args.get('page',1,type=int)
+        per_page=request.args.get('per_page',5,type
+        =int)
+        bookmarks=Bookmark.query.filter_by(
+            user_id=current_user).paginate(
+                page=page,per_page=per_page)
         data=[]
-        pdb.set_trace()
-        for bookmark in bookmarks:
+        for bookmark in bookmarks.items:
             data.append({
             'url':bookmark.url,
             'short_url':bookmark.short_url,
@@ -50,4 +52,13 @@ def handle_bookmarks():
             'created_at':bookmark.created_at,
             'updated_at':bookmark.updated_at,
         })
-        return jsonify({'data':data}),HTTPStatus.OK.value
+        meta ={
+            "page":bookmarks.page,
+            "pages":bookmarks.pages,
+            "total_count":bookmarks.total,
+            "prev_page":bookmarks.prev_num,
+            "next_page":bookmarks.next_num,
+            "has_next": bookmarks.has_next,
+            "has_prev": bookmarks.has_prev
+        }
+        return jsonify({'data':data , "meta":meta}),HTTPStatus.OK.value
