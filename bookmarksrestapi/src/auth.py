@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash,generate_password_hash
 from http import HTTPStatus
 from src.database import User,db
 import validators
-from flask_jwt_extended import create_access_token,create_refresh_token
+from flask_jwt_extended import jwt_required,create_access_token,create_refresh_token,get_jwt_identity
 
 auth=Blueprint('auth',__name__,url_prefix="/api/v1/auth")
 
@@ -57,3 +57,12 @@ def login():
             }),HTTPStatus.OK.value
     return {'error':'wrong credentials'},HTTPStatus.UNAUTHORIZED.value
 
+@auth.get("/me")
+@jwt_required()
+def me():
+    user_id=get_jwt_identity()
+    user=User.query.filter_by(id=user_id).first() is    
+    return jsonify({
+        'username':user.username,
+        'email':user.email
+    }),HTTPStatus.OK.value
