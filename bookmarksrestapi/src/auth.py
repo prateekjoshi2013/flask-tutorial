@@ -1,3 +1,4 @@
+from os import access
 from venv import create
 from flask import Blueprint,request,jsonify
 from werkzeug.security import check_password_hash,generate_password_hash
@@ -61,8 +62,18 @@ def login():
 @jwt_required()
 def me():
     user_id=get_jwt_identity()
-    user=User.query.filter_by(id=user_id).first() is    
+    user=User.query.filter_by(id=user_id).first()     
     return jsonify({
         'username':user.username,
         'email':user.email
+    }),HTTPStatus.OK.value
+
+
+@auth.get('/token/refresh')
+@jwt_required(refresh=True)
+def refresh_users_token():
+    identity=get_jwt_identity()
+    access_token=create_access_token(identity=identity)
+    return jsonify({
+        'access':access_token
     }),HTTPStatus.OK.value
